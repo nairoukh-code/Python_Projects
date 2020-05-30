@@ -406,14 +406,12 @@ class Simulation:
                 result.stand_loss_count += 1
 
     def if_there(self, dealer_up_card, player_hand_value):
-        if len(self.results) > 0 and (dealer_up_card,player_hand_value) in self.results.keys():
+        if (dealer_up_card,player_hand_value) in self.results.keys():
             return self.results[(dealer_up_card,player_hand_value)]
         else:
             return None
 
     def display_result(self):
-        #self.results.sort(key=lambda x: x.dealer_card)
-        #self.results.sort(key=lambda x: x.player_hand_value)
 
         total_wins, total_loss, total_push = 0, 0, 0
         total_hit_win, total_hit_loss, total_hit_push = 0, 0, 0
@@ -463,7 +461,7 @@ class Simulation:
         print("total stand loss :", total_stand_loss)
         print("total stand push :", total_stand_push)
         self.end = time()
-        print (str(self.end - self.start) + "mins took")
+        print("time : " + str(self.end - self.start))
 
 
 class OurStrategy(Simulation):
@@ -512,7 +510,7 @@ class OurStrategy(Simulation):
 if __name__ == "__main__":
 
     x = Simulation()
-    x.simulation_rounds(100000)
+    x.simulation_rounds(1000000)
 
     s = OurStrategy()
-    s.simulation_rounds(100000)
+    s.simulation_rounds(1000000)
