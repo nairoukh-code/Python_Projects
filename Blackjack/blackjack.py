@@ -1,6 +1,7 @@
 # took some ideas from this source ( https://dev.to/nexttech/build-a-blackjack-command-line-game-3o4b  )
 import random
 from enum import Enum
+from time import  time
 
 class Game_Status(Enum):
     WIN = 1
@@ -324,7 +325,7 @@ class Simulation:
         self.deck = Deck()
 
     def simulation_rounds(self, num_of_rounds):
-
+        self.start = time()
         for round in range(num_of_rounds):
 
             self.player_hand = Hand()
@@ -466,6 +467,8 @@ class Simulation:
         print("total stand  wis :", total_stand_win)
         print("total stand loss :", total_stand_loss)
         print("total stand push :", total_stand_push)
+        self.end = time()
+        print("time " + str(self.end - self.start) )
 
 
 class OurStrategy(Simulation):
@@ -476,7 +479,7 @@ class OurStrategy(Simulation):
         self.deck = Deck()
 
     def simulation_rounds(self, num_of_rounds):
-
+        self.start = time()
         for round in range(num_of_rounds):
 
             self.player_hand = Hand()
@@ -514,7 +517,7 @@ class OurStrategy(Simulation):
 if __name__ == "__main__":
 
     x = Simulation()
-    x.simulation_rounds(100000)
+    x.simulation_rounds(1000000)
 
     s = OurStrategy()
-    s.simulation_rounds(100000)
+    s.simulation_rounds(1000000)
