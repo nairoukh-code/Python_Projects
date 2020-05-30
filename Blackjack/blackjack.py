@@ -1,6 +1,7 @@
 # took some ideas from this source ( https://dev.to/nexttech/build-a-blackjack-command-line-game-3o4b  )
 import random
 from enum import Enum
+from time import time
 
 class Game_Status(Enum):
     WIN = 1
@@ -320,11 +321,12 @@ class Result:
 class Simulation:
 
     def __init__(self):
-        self.results = []
+        self.results = {}
         self.deck = Deck()
 
     def simulation_rounds(self, num_of_rounds):
 
+        self.start = time()
         for round in range(num_of_rounds):
 
             self.player_hand = Hand()
@@ -362,7 +364,7 @@ class Simulation:
         result = self.if_there(dealer_up_card, player_hand_value)
         if result is None:
             result = Result(dealer_up_card, player_hand_value)
-            self.results.append(result)
+            self.results[(dealer_up_card,player_hand_value)] = result
 
         if self.player_hand.is_busted():
 
@@ -404,25 +406,19 @@ class Simulation:
                 result.stand_loss_count += 1
 
     def if_there(self, dealer_up_card, player_hand_value):
-        if len(self.results) > 0:
-            for result in self.results:
-                if result.dealer_card == dealer_up_card and result.player_hand_value == player_hand_value:
-                    return result
-        return None
+        if len(self.results) > 0 and (dealer_up_card,player_hand_value) in self.results.keys():
+            return self.results[(dealer_up_card,player_hand_value)]
+        else:
+            return None
 
     def display_result(self):
-        self.results.sort(key=lambda x: x.dealer_card)
-        self.results.sort(key=lambda x: x.player_hand_value)
+        #self.results.sort(key=lambda x: x.dealer_card)
+        #self.results.sort(key=lambda x: x.player_hand_value)
 
-        total_wins = 0
-        total_loss = 0
-        total_push = 0
-        total_hit_win = 0
-        total_hit_loss = 0
-        total_hit_push = 0
-        total_stand_win = 0
-        total_stand_loss = 0
-        total_stand_push = 0
+        total_wins, total_loss, total_push = 0, 0, 0
+        total_hit_win, total_hit_loss, total_hit_push = 0, 0, 0
+        total_stand_win, total_stand_loss, total_stand_push = 0, 0, 0
+
         counter = 1
         dash = '-' * 118
         print(dash)
@@ -433,25 +429,25 @@ class Simulation:
                                                                                     "Stand Loss", "Push"))
         print(dash)
 
-        for result in self.results:
-            print('{:>1}{:>20}{:>20}{:>15}{:>12}{:>12}{:>10}{:>13}{:>12}'.format(counter, result.player_hand_value,
-                                                                                 result.dealer_card,
-                                                                                 result.hit_win_count,
-                                                                                 result.hit_loss_count,
-                                                                                 result.hit_draw_count,
-                                                                                 result.stand_win_count,
-                                                                                 result.stand_loss_count,
-                                                                                 result.stand_draw_count))
+        for keys,values in sorted(self.results.items()):
+            print('{:>1}{:>20}{:>20}{:>15}{:>12}{:>12}{:>10}{:>13}{:>12}'.format(counter, values.player_hand_value,
+                                                                                 values.dealer_card,
+                                                                                 values.hit_win_count,
+                                                                                 values.hit_loss_count,
+                                                                                 values.hit_draw_count,
+                                                                                 values.stand_win_count,
+                                                                                 values.stand_loss_count,
+                                                                                 values.stand_draw_count))
             counter += 1
-            total_wins += result.hit_win_count + result.stand_win_count
-            total_loss += result.hit_loss_count + result.stand_loss_count
-            total_push += result.hit_draw_count + result.stand_draw_count
-            total_hit_win += result.hit_win_count
-            total_hit_loss += result.hit_loss_count
-            total_hit_push += result.hit_draw_count
-            total_stand_win += result.stand_win_count
-            total_stand_loss += result.stand_loss_count
-            total_stand_push += result.hit_draw_count
+            total_wins += values.hit_win_count + values.stand_win_count
+            total_loss += values.hit_loss_count + values.stand_loss_count
+            total_push += values.hit_draw_count + values.stand_draw_count
+            total_hit_win += values.hit_win_count
+            total_hit_loss += values.hit_loss_count
+            total_hit_push += values.hit_draw_count
+            total_stand_win += values.stand_win_count
+            total_stand_loss += values.stand_loss_count
+            total_stand_push += values.hit_draw_count
 
         total = total_wins + total_loss + total_push
         print("total wins  :", total_wins)
@@ -466,17 +462,19 @@ class Simulation:
         print("total stand  wis :", total_stand_win)
         print("total stand loss :", total_stand_loss)
         print("total stand push :", total_stand_push)
+        self.end = time()
+        print (str(self.end - self.start) + "mins took")
 
 
 class OurStrategy(Simulation):
 
     def __init__(self):
         super().__init__()
-        self.results = []
+        self.results = {}
         self.deck = Deck()
 
     def simulation_rounds(self, num_of_rounds):
-
+        self.start = time()
         for round in range(num_of_rounds):
 
             self.player_hand = Hand()
