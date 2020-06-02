@@ -1,7 +1,7 @@
 # took some ideas from this source ( https://dev.to/nexttech/build-a-blackjack-command-line-game-3o4b  )
 import random
 from enum import Enum
-from time import  time
+import tkinter
 
 class Game_Status(Enum):
     WIN = 1
@@ -13,24 +13,38 @@ class Card:
     def __init__(self, suit, value):
         self.suit = suit
         self.value = value
+        if tkinter.TkVersion >= 8.6:
+            self.extension = 'png'
+        else:
+            self.extension = 'ppm'
 
     def __repr__(self):
-        return " of ".join((self.value, self.suit))
+        return 'cards/{}_{}.{}'.format(self.value, self.suit, self.extension)
 
 
 class Deck:
+
     def __init__(self):
-        self.cards = [Card(s, v) for s in ["Spades", "Clubs", "Hearts",
-                                           "Diamonds"] for v in ["A", "2", "3", "4", "5", "6",
-                                                                 "7", "8", "9", "10", "10", "10", "10"]] * 6
+        self.cards = [Card(s, v) for s in ["spade", "club", "heart",
+                                           "diamond"] for v in ["A", "2", "3", "4", "5", "6",
+                                                                 "7", "8", "9", "10", "jack", "queen", "king"]] * 6
         random.shuffle(self.cards)
 
+        self.card_images = []
+        for card in self.cards:
+            image = tkinter.PhotoImage(file=card)
+            #card_images[(card.value, card.suit)] = [card.value, card.suit,  image]
+            self.card_images.append([card.value, card.suit, image])
+
+        print(self.cards)
+
+
     def deal(self):
-        if len(self.cards) > 1:
-            return self.cards.pop(0)
+        if len(self.card_images) > 1:
+            return self.card_images.pop(0)
         else:
             self.__init__()
-            return self.cards.pop(0)
+            return self.card_images.pop(0)
 
 
 class Hand:
@@ -120,6 +134,59 @@ class Game:
             self.dealer_hand = Hand(dealer=True)
             self.first_hand = Hand()
             self.second_hand = Hand()
+
+            mainWindow = tkinter.Tk()
+            mainWindow.title("Black Jack")
+            mainWindow.geometry("6400x4800")
+            mainWindow.configure(bg="blue")
+            mainWindow.columnconfigure(0, weight=2)
+            mainWindow.columnconfigure(1, weight=2)
+            mainWindow.columnconfigure(2, weight=2)
+            mainWindow.columnconfigure(3, weight=0)
+            mainWindow.columnconfigure(4, weight=5)
+            mainWindow.columnconfigure(5, weight=0)
+            result_text = tkinter.StringVar()
+            result = tkinter.Label(mainWindow, textvariable=result_text)
+            result.grid(row=0, column=0, columnspan=3)
+
+            card_frame = tkinter.Frame(mainWindow, relief="sunken", borderwidth=1, bg="white")
+            card_frame.grid(row=1, column=0, sticky='ew', columnspan=3, rowspan=2)
+
+            dealer_score_label = tkinter.IntVar()
+            tkinter.Label(card_frame, text="Dealer", bg="black", fg="white").grid(row=0, column=0)
+            tkinter.Label(card_frame, textvariable=dealer_score_label, bg="black", fg="white").grid(row=1, column=0)
+            # embedded frame to hold the card images
+            dealer_card_frame = tkinter.Frame(card_frame, bg="black")
+            dealer_card_frame.grid(row=0, column=1, sticky='ew', rowspan=2)
+
+            player_score_label = tkinter.IntVar()
+
+            tkinter.Label(card_frame, text="Player", bg="black", fg="white").grid(row=2, column=0)
+            tkinter.Label(card_frame, textvariable=player_score_label, bg="black", fg="white").grid(row=3, column=0)
+            # embedded frame to hold the card images
+            player_card_frame = tkinter.Frame(card_frame, bg="black")
+            player_card_frame.grid(row=2, column=1, sticky='ew', rowspan=2)
+
+            button_frame = tkinter.Frame(mainWindow)
+            button_frame.grid(row=3, column=1, columnspan=3, sticky='w')
+
+            player_button = tkinter.Button(button_frame, text="Hit", padx=8)
+            player_button.grid(row=0, column=0)
+
+            dealer_button = tkinter.Button(button_frame, text="Stay",  padx=5)
+            dealer_button.grid(row=0, column=1)
+
+            reset_button = tkinter.Button(button_frame, text="New Game")
+            reset_button.grid(row=0, column=2)
+
+            shuffle_button = tkinter.Button(button_frame, text="Shuffle", padx=2)
+            shuffle_button.grid(row=0, column=3)
+
+
+
+
+            mainWindow.mainloop()
+
 
             for i in range(2):
                 self.player_hand.add_card(self.deck.deal())
@@ -305,219 +372,9 @@ class Game:
             print("Dealer has blackjack! Dealer wins!")
 
 
-class Result:
 
-    def __init__(self, dealer_card, player_hand_value):
-        self.dealer_card = dealer_card
-        self.player_hand_value = player_hand_value
-        self.hit_win_count = 0
-        self.hit_loss_count = 0
-        self.hit_draw_count = 0
-        self.stand_win_count = 0
-        self.stand_loss_count = 0
-        self.stand_draw_count = 0
-
-
-class Simulation:
-
-    def __init__(self):
-        self.results = []
-        self.deck = Deck()
-
-    def simulation_rounds(self, num_of_rounds):
-        self.start = time()
-        for round in range(num_of_rounds):
-
-            self.player_hand = Hand()
-            self.dealer_hand = Hand(dealer=True)
-
-            for i in range(2):
-                self.player_hand.add_card(self.deck.deal())
-                self.dealer_hand.add_card(self.deck.deal())
-
-            player_hand_value = self.player_hand.get_value()
-
-            while self.player_hand.get_value() < 11:
-                self.player_hand.add_card(self.deck.deal())
-                player_hand_value = self.player_hand.get_value()
-
-            while self.dealer_hand.get_value() < 17:
-                self.dealer_hand.add_card(self.deck.deal())
-
-            dealer_up_card = self.dealer_hand.cards[0].value
-            actions = ["h", "s"]
-            random.shuffle(actions)
-            choice = actions.pop(0)
-
-            if choice in ['h'] and player_hand_value != 21:
-                self.player_hand.add_card(self.deck.deal())
-                self.calculateResult('h', dealer_up_card, player_hand_value)
-
-            else:
-                self.calculateResult('s', dealer_up_card, player_hand_value)
-
-        self.display_result()
-
-    def calculateResult(self, action, dealer_up_card, player_hand_value):
-
-        result = self.if_there(dealer_up_card, player_hand_value)
-        if result is None:
-            result = Result(dealer_up_card, player_hand_value)
-            self.results.append(result)
-
-        if self.player_hand.is_busted():
-
-            if action == 'h':
-                result.hit_loss_count += 1
-            else:
-                result.stand_loss_count += 1
-
-        elif self.dealer_hand.is_busted():
-
-            if action == 'h':
-                result.hit_win_count += 1
-            else:
-                result.stand_win_count += 1
-
-        elif self.player_hand.check_for_blackjack():
-
-            result.stand_win_count += 1
-
-        elif self.player_hand.player_win(self.dealer_hand):
-
-            if action == 'h':
-                result.hit_win_count += 1
-            else:
-                result.stand_win_count += 1
-
-        elif self.player_hand.is_push(self.dealer_hand):
-
-            if action == 'h':
-                result.hit_draw_count += 1
-            else:
-                result.stand_draw_count += 1
-
-        elif self.player_hand.player_loss(self.dealer_hand):
-
-            if action == 'h':
-                result.hit_loss_count += 1
-            else:
-                result.stand_loss_count += 1
-
-    def if_there(self, dealer_up_card, player_hand_value):
-        if len(self.results) > 0:
-            for result in self.results:
-                if result.dealer_card == dealer_up_card and result.player_hand_value == player_hand_value:
-                    return result
-        return None
-
-    def display_result(self):
-        self.results.sort(key=lambda x: x.dealer_card)
-        self.results.sort(key=lambda x: x.player_hand_value)
-
-        total_wins = 0
-        total_loss = 0
-        total_push = 0
-        total_hit_win = 0
-        total_hit_loss = 0
-        total_hit_push = 0
-        total_stand_win = 0
-        total_stand_loss = 0
-        total_stand_push = 0
-        counter = 1
-        dash = '-' * 118
-        print(dash)
-        print('{:<12s}{:>12s}{:>19s}{:>12s}{:>12s}{:>9s}{:>13s}{:>14s}{:>8}'.format("Counter", "Player Card Value",
-                                                                                    "Dealer Up Card", "Hit Win",
-                                                                                    "Hit Lose",
-                                                                                    "Push", "Stand win",
-                                                                                    "Stand Loss", "Push"))
-        print(dash)
-
-        for result in self.results:
-            print('{:>1}{:>20}{:>20}{:>15}{:>12}{:>12}{:>10}{:>13}{:>12}'.format(counter, result.player_hand_value,
-                                                                                 result.dealer_card,
-                                                                                 result.hit_win_count,
-                                                                                 result.hit_loss_count,
-                                                                                 result.hit_draw_count,
-                                                                                 result.stand_win_count,
-                                                                                 result.stand_loss_count,
-                                                                                 result.stand_draw_count))
-            counter += 1
-            total_wins += result.hit_win_count + result.stand_win_count
-            total_loss += result.hit_loss_count + result.stand_loss_count
-            total_push += result.hit_draw_count + result.stand_draw_count
-            total_hit_win += result.hit_win_count
-            total_hit_loss += result.hit_loss_count
-            total_hit_push += result.hit_draw_count
-            total_stand_win += result.stand_win_count
-            total_stand_loss += result.stand_loss_count
-            total_stand_push += result.hit_draw_count
-
-        total = total_wins + total_loss + total_push
-        print("total wins  :", total_wins)
-        print("total loss  :", total_loss)
-        print("total push  :", total_push)
-        print("total       :", total)
-        print()
-        print("----------- details ------------")
-        print("total hit wis    :", total_hit_win)
-        print("total hit loss   :", total_hit_loss)
-        print("total hit push   :", total_hit_push)
-        print("total stand  wis :", total_stand_win)
-        print("total stand loss :", total_stand_loss)
-        print("total stand push :", total_stand_push)
-        self.end = time()
-        print("time " + str(self.end - self.start) )
-
-
-class OurStrategy(Simulation):
-
-    def __init__(self):
-        super().__init__()
-        self.results = []
-        self.deck = Deck()
-
-    def simulation_rounds(self, num_of_rounds):
-        self.start = time()
-        for round in range(num_of_rounds):
-
-            self.player_hand = Hand()
-            self.dealer_hand = Hand(dealer=True)
-
-            for i in range(2):
-                self.player_hand.add_card(self.deck.deal())
-                self.dealer_hand.add_card(self.deck.deal())
-
-            player_hand_value = self.player_hand.get_value()
-
-            while self.player_hand.get_value() < 11:
-                self.player_hand.add_card(self.deck.deal())
-                player_hand_value = self.player_hand.get_value()
-
-            while self.dealer_hand.get_value() < 17:
-                self.dealer_hand.add_card(self.deck.deal())
-
-            dealer_up_card = self.dealer_hand.cards[0].value
-
-            if (player_hand_value == 11 and dealer_up_card in ["2", "4", "5", "6", "7", "8", "9", "10"]) or \
-                    (player_hand_value == 12 and dealer_up_card in ["2", "7", "8", "9", "10", "A"]) or \
-                    (player_hand_value == 13 and dealer_up_card in ["5", "7", "8", "9"]) or \
-                    (player_hand_value == 14 and dealer_up_card == "9") or \
-                    (player_hand_value == 15 and dealer_up_card == "A"):
-
-                self.player_hand.add_card(self.deck.deal())
-                self.calculateResult('h', dealer_up_card, player_hand_value)
-
-            else:
-                self.calculateResult('s', dealer_up_card, player_hand_value)
-
-        self.display_result()
 
 if __name__ == "__main__":
 
-    x = Simulation()
-    x.simulation_rounds(1000000)
-
-    s = OurStrategy()
-    s.simulation_rounds(1000000)
+    game = Deck()
+    Deck()
