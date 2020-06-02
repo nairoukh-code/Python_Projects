@@ -2,13 +2,14 @@
 import random
 from enum import Enum
 from time import time
+import tkinter
 
 class Game_Status(Enum):
     WIN = 1
     LOSE = 2
     PUSH = 3
 
-#1
+
 class Card:
     def __init__(self, suit, value):
         self.suit = suit
